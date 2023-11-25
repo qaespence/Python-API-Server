@@ -15,12 +15,23 @@ users = []
 @app.route('/pet', methods=['POST'])
 def add_pet():
     """
-    add_pet - function for POST /pet
-    @return: success: pet object, status code; failure: message, status code
+    Add a new pet to the Pet Store.
+    POST /pet
+
+    Request JSON Body:
+    - name (str): The name of the new pet.
+    - category (str): The category of the new pet.
+    - status (str): The status of the new pet.
+
+    Returns:
+    - If the pet is successfully added, return the pet's information with a status code of 201.
+    - If there is a bad request or missing data, return a JSON message with a status code of 400.
+    - If the added data exceeds the maximum allowed length, return a JSON message indicating 'Bad or missing data. Name/Category/Status too long' with a status code of 400.
+    - If the new pet would be a duplicate, return a JSON message indicating 'Pet with the same name and category already exists' with a status code of 400.
     """
     data = request.get_json()
 
-    # return 400 if data is missing
+    # Return 400 if data is missing
     if 'name' not in data:
         abort(400, 'Bad or missing data. Missing name field')
     if 'category' not in data:
@@ -28,7 +39,7 @@ def add_pet():
     if 'status' not in data:
         abort(400, 'Bad or missing data. Missing status field')
 
-    # return 400 if data is too long
+    # Check and return 400 if data is too long
     if len(data['name']) > 100:
         abort(400, 'Bad or missing data. Name too long')
     if len(data['category']) > 100:
@@ -36,11 +47,11 @@ def add_pet():
     if len(data['status']) > 100:
         abort(400, 'Bad or missing data. Status too long')
 
-    # return 400 if data is duplicated
+    # Return 400 if data is duplicated
     if any(pet['name'] == data['name'] and pet['category'] == data['category'] for pet in pets):
         abort(400, 'Pet with the same name and category already exists')
 
-    # build pet object
+    # Build pet object
     pet_id = len(pets) + 1
     new_pet = {
         'id': pet_id,
@@ -48,40 +59,70 @@ def add_pet():
         'category': data['category'],
         'status': data['status']
     }
-    # add pet to DB
+
+    # Add pet to the database
     pets.append(new_pet)
+
+    # Return the new pet with a status code of 201
     return jsonify(new_pet), 201
 
 
 @app.route('/pet/<int:pet_id>', methods=['GET'])
 def get_pet(pet_id):
     """
-    get_pet - function for GET /pet/{id}
-    @param pet_id: pet id/token
-    @return: success: pet object, status code; failure: message, status code
+    Retrieve a pet from the Pet Store by ID.
+    GET /pet/:pet_id
+
+    Parameters:
+    - pet_id (int): The unique identifier of the pet to retrieve.
+
+    Returns:
+    - If the pet is found, return the pet's information with a status code of 200.
+    - If the pet is not found, return a JSON message indicating 'Pet not found' with a status code of 404.
     """
+    # Retrieve the pet by ID
     pet = next((p for p in pets if p['id'] == pet_id), None)
+
+    # Check if the pet is found
     if pet:
         return jsonify(pet), 200
     else:
+        # Return a JSON message for a not-found pet with status code 404
         return jsonify({'message': 'Pet not found'}), 404
 
 
 @app.route('/pet/<int:pet_id>', methods=['PUT'])
 def update_pet(pet_id):
     """
-    update_pet - function for PUT /pet/{id}
-    @param pet_id: pet id/token
-    @return: success: pet object, status code; failure: message, status code
+    Update a pet in the Pet Store by ID.
+    PUT /pet/:pet_id
+
+    Parameters:
+    - pet_id (int): The unique identifier of the pet to update.
+
+    Request JSON Body:
+    - name (str, optional): The updated name of the pet.
+    - category (str, optional): The updated category of the pet.
+    - status (str, optional): The updated status of the pet.
+
+    Returns:
+    - If the pet is found and successfully updated, return the updated pet's information with a status code of 200.
+    - If the pet is not found, return a JSON message indicating 'Pet not found' with a status code of 404.
+    - If the update would result in a duplicate pet, return a JSON message indicating 'Pet with the same name and category already exists' with a status code of 400.
+    - If there is a bad request or missing data, return a JSON message with a status code of 400.
+    - If the updated data exceeds the maximum allowed length, return a JSON message indicating 'Bad or missing data. Name/Category/Status too long' with a status code of 400.
     """
+    # Retrieve payload data
     data = request.get_json()
 
+    # Retrieve the pet by ID
     existing_pet = next((pet for pet in pets if pet['id'] == pet_id), None)
-    # return 404 if pet isn't found
+
+    # Return 404 if pet isn't found
     if not existing_pet:
         abort(404, 'Pet not found')
 
-    # return 400 if pet will be a duplicate
+    # Return 400 if the update would result in a duplicate pet
     if any(
         pet['name'] == data['name']
         and pet['category'] == data['category']
@@ -90,74 +131,119 @@ def update_pet(pet_id):
     ):
         abort(400, 'Pet with the same name and category already exists')
 
-    # return 400 if data is missing
-    if data['name'] is not None:
+    # Update the pet with the provided data
+    if 'name' in data:
+        # Check and update the name, if provided
+        if len(data['name']) > 100:
+            abort(400, 'Bad or missing data. Name too long')
         existing_pet['name'] = data['name']
-    if data['category'] is not None:
+
+    if 'category' in data:
+        # Check and update the category, if provided
+        if len(data['category']) > 100:
+            abort(400, 'Bad or missing data. Category too long')
         existing_pet['category'] = data['category']
-    if data['status'] is not None:
+
+    if 'status' in data:
+        # Check and update the status, if provided
+        if len(data['status']) > 100:
+            abort(400, 'Bad or missing data. Status too long')
         existing_pet['status'] = data['status']
 
+    # Return the updated pet with a status code of 200
     return jsonify(existing_pet), 200
 
 
 @app.route('/pet/<int:pet_id>', methods=['DELETE'])
 def delete_pet(pet_id):
     """
-    delete_pet - function for DELETE /pet/{id}
-    @param pet_id: pet id/token
-    @return: message, status code
+    Delete a pet from the Pet Store by ID.
+    DELETE /pet/:pet_id
+
+    Parameters:
+    - pet_id (int): The unique identifier of the pet to delete.
+
+    Returns:
+    - If the pet is found and successfully deleted, return a JSON message indicating 'Pet deleted' with a status code of 204 (No Content).
+    - If the pet is not found, return a JSON message indicating 'Pet not found' with a status code of 404.
     """
     global pets
+
+    # Retrieve the pet by ID
     pet = next((p for p in pets if p['id'] == pet_id), None)
+
+    # Check if the pet is found
     if pet:
+        # Remove the pet from the database
         pets = [p for p in pets if p['id'] != pet_id]
         return jsonify({'message': 'Pet deleted'}), 204
     else:
+        # Return a JSON message for a not-found pet with status code 404
         return jsonify({'message': 'Pet not found'}), 404
 
 
 @app.route('/pet/findByStatus', methods=['GET'])
 def find_pet_by_status():
     """
-    find_pet_by_status - function for GET /pet/findByStatus
-    @return: success: pet object(s), status code; failure: message, status code
+    Find pets in the Pet Store by status.
+    GET /pet/findByStatus?status=:statusType
+
+    Query Parameters:
+    - status (str): The status of the pets to retrieve. Should be one of 'available', 'pending', or 'sold'.
+
+    Returns:
+    - If the status parameter is missing, return a JSON message indicating 'Status parameter is missing' with a status code of 400.
+    - If the status parameter is invalid, return a JSON message indicating 'Status parameter is invalid; should be available, pending, or sold' with a status code of 400.
+    - If pets are found with the specified status, return the list of pets with a status code of 200.
     """
     status = request.args.get('status')
 
-    # return 400 if status URL parameter missing
+    # Return 400 if the status parameter is missing
     if not status:
         abort(400, 'Status parameter is missing')
 
-    # return 400 if status is bad
+    # Return 400 if the status is invalid
     if status not in ["available", "pending", "sold"]:
-        abort(400, 'Status parameter is invalid; should be available, pending or sold')
+        abort(400, 'Status parameter is invalid; should be available, pending, or sold')
 
+    # Find pets with the specified status
     found_pets = [pet for pet in pets if pet['status'] == status]
 
+    # Return the found pets with a status code of 200
     return jsonify(found_pets), 200
 
 
 @app.route('/pet/<int:pet_id>/uploadImage', methods=['POST'])
 def upload_image(pet_id):
     """
-    upload_image - function for POST /pet/:pet_id/uploadImage
-    @param pet_id: pet id/token
-    @return: message, status code
+    Upload an image for a pet in the Pet Store by ID.
+    POST /pet/:pet_id/uploadImage
+
+    Parameters:
+    - pet_id (int): The unique identifier of the pet for which to upload an image.
+
+    Request Form Data:
+    - file (file): The image file to upload.
+
+    Returns:
+    - If the pet is found and the image is successfully uploaded, return a JSON message indicating 'File uploaded successfully' with a status code of 201.
+    - If the pet is not found, return a JSON message indicating 'Pet not found' with a status code of 404.
+    - If there is no file part in the request, return a JSON message indicating 'No file part' with a status code of 400.
+    - If no selected file is provided, return a JSON message indicating 'No selected file' with a status code of 400.
     """
     pet = next((p for p in pets if p['id'] == pet_id), None)
 
-    # return 404 if not found
+    # Return 404 if the pet is not found
     if not pet:
         return jsonify({'message': 'Pet not found'}), 404
 
-    # return 400 if file not valid
+    # Return 400 if there is no file part in the request
     if 'file' not in request.files:
         abort(400, 'No file part')
 
     file = request.files['file']
 
-    # return 400 if file missing
+    # Return 400 if no selected file is provided
     if file.filename == '':
         abort(400, 'No selected file')
 
@@ -170,16 +256,33 @@ def upload_image(pet_id):
 @app.route('/store/inventory', methods=['GET'])
 def get_inventory():
     """
-    get_inventory - function for GET /store/inventory
-    @return: inventory data/object, status code
+    Retrieve the inventory of the Pet Store.
+    GET /store/inventory
+
+    Returns:
+    - The store's inventory as a JSON object with a status code of 200.
     """
     return jsonify(inventory), 200
 
 
 @app.route('/store/inventory/add', methods=['POST'])
 def add_to_inventory():
+    """
+    Add a quantity of a pet to the inventory of the Pet Store.
+    POST /store/inventory/add
+
+    Request JSON Body:
+    - petId (int): The unique identifier of the pet to add to the inventory.
+    - quantity (int): The quantity to add to the inventory.
+
+    Returns:
+    - If the data is successfully processed and the inventory is updated, return a JSON message indicating the added quantity with a status code of 200.
+    - If there is a bad request or missing data, return a JSON message with a status code of 400.
+    - If the specified pet is not found in the inventory, return a JSON message indicating 'Pet not found in inventory' with a status code of 404.
+    """
     data = request.get_json()
 
+    # Return 400 if data is missing
     if 'petId' not in data:
         abort(400, 'Bad or missing data. Missing petId field')
     if 'quantity' not in data:
@@ -188,19 +291,35 @@ def add_to_inventory():
     pet_id = data['petId']
     quantity = data['quantity']
 
+    # Return 404 if the specified pet is not found in the inventory
     if pet_id not in inventory:
         abort(404, 'Pet not found in inventory')
 
     # Update inventory by adding the specified quantity
     inventory[pet_id] += quantity
 
-    return jsonify({'message': f'Added {quantity} to inventory for pet {pet_id}'})
+    # Return a JSON message indicating the added quantity with a status code of 200
+    return jsonify({'message': f'Added {quantity} to inventory for pet {pet_id}'}), 200
 
 
 @app.route('/store/inventory/remove', methods=['POST'])
 def remove_from_inventory():
+    """
+    Remove a quantity of a pet from the inventory of the Pet Store.
+
+    Request JSON Body:
+    - petId (int): The unique identifier of the pet to remove from the inventory.
+    - quantity (int): The quantity to remove from the inventory.
+
+    Returns:
+    - If the data is successfully processed and the inventory is updated, return a JSON message indicating the removed quantity.
+    - If there is a bad request or missing data, return a JSON message with a status code of 400.
+    - If the specified pet is not found in the inventory, return a JSON message indicating 'Pet not found in inventory' with a status code of 404.
+    - If there is not enough quantity in the inventory, return a JSON message indicating 'Not enough quantity in inventory' with a status code of 400.
+    """
     data = request.get_json()
 
+    # Return 400 if data is missing
     if 'petId' not in data:
         abort(400, 'Bad or missing data. Missing petId field')
     if 'quantity' not in data:
@@ -209,6 +328,7 @@ def remove_from_inventory():
     pet_id = data['petId']
     quantity = data['quantity']
 
+    # Return 404 if the specified pet is not found in the inventory
     if pet_id not in inventory:
         abort(404, 'Pet not found in inventory')
 
@@ -219,6 +339,7 @@ def remove_from_inventory():
     # Update inventory by subtracting the specified quantity
     inventory[pet_id] -= quantity
 
+    # Return a JSON message indicating the removed quantity
     return jsonify({'message': f'Removed {quantity} from inventory for pet {pet_id}'})
 
 
