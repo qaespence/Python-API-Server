@@ -1,5 +1,6 @@
 from test.api.api_pet import add_pet, get_pet, delete_pet
 from test.helpers.utils import generate_random_pet_data
+from test.helpers.utils import multipoint_verification
 
 # BASE_URL = "http://127.0.0.1:5000"  # Update with your actual server URL
 created_pet_ids = []
@@ -29,17 +30,17 @@ def test_add_pet():
     # Perform a POST request to add a new pet
     pet, status_code = add_pet(test_data)
 
-    # Validate the outcome of the test with a single assert statement
-    assert status_code == 201, f"Expected status code 201, but received {status_code}"
-    assert pet == {
-        "id": pet["id"],
-        "name": test_data["name"],
-        "category": test_data["category"],
-        "status": test_data["status"]
-    }, "Unexpected response JSON"
-
     # Store the created pet ID for cleanup
     created_pet_ids.append(pet['id'])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(pet), status_code,
+                                           201,
+                                           [pet["id"],
+                                            test_data["name"],
+                                            test_data["category"],
+                                            test_data["status"]])
+    assert test_results == "No mismatch values"
 
 
 def test_add_pet_name_missing():
@@ -63,9 +64,11 @@ def test_add_pet_name_missing():
     # Perform a POST request to add a new pet with missing 'name' field
     response, status_code = add_pet(test_data)
 
-    # Validate the outcome of the test
-    assert status_code == 400, f"Expected status code 400, but received {status_code}"
-    assert "Bad or missing data. Missing name field" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           400,
+                                           ["Bad or missing data. Missing name field"])
+    assert test_results == "No mismatch values"
 
 
 def test_add_pet_category_missing():
@@ -89,9 +92,11 @@ def test_add_pet_category_missing():
     # Perform a POST request to add a new pet with missing 'category' field
     response, status_code = add_pet(test_data)
 
-    # Validate the outcome of the test
-    assert status_code == 400, f"Expected status code 400, but received {status_code}"
-    assert "Bad or missing data. Missing category field" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           400,
+                                           ["Bad or missing data. Missing category field"])
+    assert test_results == "No mismatch values"
 
 
 def test_add_pet_status_missing():
@@ -115,9 +120,11 @@ def test_add_pet_status_missing():
     # Perform a POST request to add a new pet with missing 'status' field
     response, status_code = add_pet(test_data)
 
-    # Validate the outcome of the test
-    assert status_code == 400, f"Expected status code 400, but received {status_code}"
-    assert "Bad or missing data. Missing status field" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           400,
+                                           ["Bad or missing data. Missing status field"])
+    assert test_results == "No mismatch values"
 
 
 def test_add_pet_duplicate():
@@ -148,9 +155,11 @@ def test_add_pet_duplicate():
     # Perform another POST request to add a new pet with the same data
     response, status_code = add_pet(test_data)
 
-    # Validate the outcome of the test
-    assert status_code == 400, f"Expected status code 400, but received {status_code}"
-    assert "Pet with the same name and category already exists" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           400,
+                                           ["Pet with the same name and category already exists"])
+    assert test_results == "No mismatch values"
 
 
 #
@@ -186,14 +195,14 @@ def test_get_pet():
     pet_id = pet['id']
     response, status_code = get_pet(pet_id)
 
-    # Validate the outcome of the test
-    assert status_code == 200, f"Expected status code 200, but received {status_code}"
-    assert response == {
-        "id": pet_id,
-        "name": test_data["name"],
-        "category": test_data["category"],
-        "status": test_data["status"]
-    }, "Unexpected response JSON"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(pet), status_code,
+                                           200,
+                                           [pet_id,
+                                            test_data["name"],
+                                            test_data["category"],
+                                            test_data["status"]])
+    assert test_results == "No mismatch values"
 
 
 def test_get_pet_id_0():
@@ -211,9 +220,11 @@ def test_get_pet_id_0():
     # Perform a GET request to retrieve a pet with ID 0
     response, status_code = get_pet(0)
 
-    # Validate the outcome of the test
-    assert status_code == 404, f"Expected status code 404, but received {status_code}"
-    assert "Pet not found" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
 
 
 def test_get_pet_id_negative_1():
@@ -231,9 +242,11 @@ def test_get_pet_id_negative_1():
     # Perform a GET request to retrieve a pet with ID -1
     response, status_code = get_pet(-1)
 
-    # Validate the outcome of the test
-    assert status_code == 404, f"Expected status code 404, but received {status_code}"
-    assert "Pet not found" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
 
 
 def test_get_pet_id_999999999():
@@ -251,9 +264,11 @@ def test_get_pet_id_999999999():
     # Perform a GET request to retrieve a pet with ID 999999999
     response, status_code = get_pet(999999999)
 
-    # Validate the outcome of the test
-    assert status_code == 404, f"Expected status code 404, but received {status_code}"
-    assert "Pet not found" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
 
 
 def test_get_pet_id_invalid():
@@ -271,9 +286,11 @@ def test_get_pet_id_invalid():
     # Perform a GET request to retrieve a pet with an invalid ID
     response, status_code = get_pet("invalid")
 
-    # Validate the outcome of the test
-    assert status_code == 404, f"Expected status code 404, but received {status_code}"
-    assert "Pet not found" in response, "Unexpected error message in the response"
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(str(response), status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
 
 
 def test_cleanup_created_pets():
