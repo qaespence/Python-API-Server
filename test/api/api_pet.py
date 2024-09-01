@@ -1,8 +1,9 @@
 import requests
 from test.helpers.utils import load_config
+from test.api.basic_requests import post, get, put, delete
 
 
-def add_pet(payload):
+def add_pet(name: str = None, category: str = None, status: str = None):
     """
     Test the functionality of adding a new pet to the Pet Store.
 
@@ -13,15 +14,16 @@ def add_pet(payload):
     - If the pet is successfully added, return a tuple containing the JSON response and the HTTP status code with a status code of 201.
     - If there is an error during the request, return a tuple containing the error message and the HTTP status code received in the response.
     """
-    config = load_config()
-    response = requests.post(f"{config['base_url']}/pet", json=payload)
 
-    # Check if the request is successful (status code 201)
-    if response.status_code == 201:
-        return response.json(), response.status_code
-    else:
-        # Return the error message and status code received in the response
-        return response.text, response.status_code
+    payload = {}
+    if name is not None:
+        payload["name"] = name
+    if category is not None:
+        payload["category"] = category
+    if status is not None:
+        payload["status"] = status
+
+    return post("/pet", payload, {"content-type": "application/json"})
 
 
 def get_pet(pet_id):
@@ -36,21 +38,11 @@ def get_pet(pet_id):
     - If the pet is not found, return a tuple containing the error message 'Pet not found' and the HTTP status code with a status code of 404.
     - If there is an error during the request, return a tuple containing the error message and the HTTP status code received in the response.
     """
-    config = load_config()
-    response = requests.get(f"{config['base_url']}/pet/{pet_id}")
 
-    # Check if the request is successful (status code 200)
-    if response.status_code == 200:
-        return response.json(), response.status_code
-    elif response.status_code == 404:
-        # Return the error message 'Pet not found' and status code 404
-        return "Pet not found", response.status_code
-    else:
-        # Return the error message and status code received in the response
-        return response.text, response.status_code
+    return get(f"/pet/{pet_id}")
 
 
-def update_pet(pet_id, payload):
+def update_pet(pet_id, name: str = None, category: str = None, status: str = None):
     """
     Test the functionality of updating a pet in the Pet Store by ID.
 
@@ -63,18 +55,16 @@ def update_pet(pet_id, payload):
     - If the pet is not found, return a tuple containing the error message 'Pet not found' and the HTTP status code with a status code of 404.
     - If there is an error during the request, return a tuple containing the error message and the HTTP status code received in the response.
     """
-    config = load_config()
-    response = requests.put(f"{config['base_url']}/pet/{pet_id}", json=payload)
 
-    # Check if the request is successful (status code 200)
-    if response.status_code == 200:
-        return response.json(), response.status_code
-    elif response.status_code == 404:
-        # Return the error message 'Pet not found' and status code 404
-        return "Pet not found", response.status_code
-    else:
-        # Return the error message and status code received in the response
-        return response.text, response.status_code
+    payload = {}
+    if name is not None:
+        payload["name"] = name
+    if category is not None:
+        payload["category"] = category
+    if status is not None:
+        payload["status"] = status
+
+    return put(f"/pet/{pet_id}", payload, {"content-type": "application/json"})
 
 
 def delete_pet(pet_id):
@@ -89,15 +79,5 @@ def delete_pet(pet_id):
     - If the pet is not found, return a tuple containing the error message 'Pet not found' and the HTTP status code with a status code of 404.
     - If there is an error during the request, return a tuple containing the error message and the HTTP status code received in the response.
     """
-    config = load_config()
-    response = requests.delete(f"{config['base_url']}/pet/{pet_id}")
 
-    # Check if the request is successful (status code 200)
-    if response.status_code == 200:
-        return "Pet deleted successfully", response.status_code
-    elif response.status_code == 404:
-        # Return the error message 'Pet not found' and status code 404
-        return "Pet not found", response.status_code
-    else:
-        # Return the error message and status code received in the response
-        return response.text, response.status_code
+    return delete(f"/pet/{pet_id}")
