@@ -1,4 +1,4 @@
-from test.api.api_pet import add_pet, get_pet, delete_pet
+from test.api.api_pet import add_pet, get_pet, delete_pet, update_pet
 from test.helpers.utils import generate_random_pet_data
 from test.helpers.utils import multipoint_verification
 import json
@@ -291,6 +291,299 @@ def test_get_pet_id_invalid():
     test_results = multipoint_verification(response.text, response.status_code,
                                            404,
                                            ["404 Not Found"])
+    assert test_results == "No mismatch values"
+
+
+#
+# PUT /pet tests
+#
+def test_update_pet():
+    """
+    Test the functionality of updating a pet in the Pet Store by ID.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Update the pet's name, category, and status.
+    - Perform a PUT request to update the pet's data.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 200, indicating a successful update.
+    - The response JSON should contain the updated pet's information.
+    - The updated pet's name, category, and status should match the updated data.
+    """
+    # Generate random pet data and add the pet
+    initial_data = generate_random_pet_data()
+    response = add_pet(initial_data["name"], initial_data["category"], initial_data["status"])
+    pet = json.loads(response.text)
+
+    # Store the created pet ID for cleanup
+    created_pet_ids.append(pet['id'])
+
+    # Generate new random data for the update
+    updated_data = generate_random_pet_data()
+
+    # Perform a PUT request to update the pet
+    response = update_pet(pet['id'], updated_data["name"], updated_data["category"], updated_data["status"])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           200,
+                                           [pet['id'],
+                                            updated_data["name"],
+                                            updated_data["category"],
+                                            updated_data["status"]])
+    assert test_results == "No mismatch values"
+
+
+def test_update_pet_name_missing():
+    """
+    Test the functionality of updating a pet in the Pet Store by ID with missing name field.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Attempt to update the pet's data with a missing name.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 200, indicating a successful update.
+    - The response JSON should contain the updated pet's information with the other fields unchanged.
+    """
+    # Generate random pet data and add the pet
+    initial_data = generate_random_pet_data()
+    response = add_pet(initial_data["name"], initial_data["category"], initial_data["status"])
+    pet = json.loads(response.text)
+
+    # Store the created pet ID for cleanup
+    created_pet_ids.append(pet['id'])
+
+    # Generate new random data for the update
+    updated_data = generate_random_pet_data()
+
+    # Perform a PUT request to update the pet
+    response = update_pet(pet['id'], None, updated_data["category"], updated_data["status"])
+    print(response.text)
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           200,
+                                           [pet['id'],
+                                            pet['name'],  # Name should remain unchanged
+                                            updated_data["category"],
+                                            updated_data["status"]])
+    assert test_results == "No mismatch values"
+
+
+def test_update_pet_category_missing():
+    """
+    Test the functionality of updating a pet in the Pet Store by ID with missing category field.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Attempt to update the pet's data with a missing category.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 200, indicating a successful update.
+    - The response JSON should contain the updated pet's information with the other fields unchanged.
+    """
+    # Generate random pet data and add the pet
+    initial_data = generate_random_pet_data()
+    response = add_pet(initial_data["name"], initial_data["category"], initial_data["status"])
+    pet = json.loads(response.text)
+
+    # Store the created pet ID for cleanup
+    created_pet_ids.append(pet['id'])
+
+    # Generate new random data for the update
+    updated_data = generate_random_pet_data()
+
+    # Perform a PUT request to update the pet
+    response = update_pet(pet['id'], updated_data["category"], None, updated_data["status"])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           200,
+                                           [pet['id'],
+                                            updated_data["category"],
+                                            pet['category'],  # Category should remain unchanged
+                                            updated_data["status"]])
+    assert test_results == "No mismatch values"
+
+
+def test_update_pet_status_missing():
+    """
+    Test the functionality of updating a pet in the Pet Store by ID with missing status field.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Attempt to update the pet's data with a missing status.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 200, indicating a successful update.
+    - The response JSON should contain the updated pet's information with the other fields unchanged.
+    """
+    # Generate random pet data and add the pet
+    initial_data = generate_random_pet_data()
+    response = add_pet(initial_data["name"], initial_data["category"], initial_data["status"])
+    pet = json.loads(response.text)
+
+    # Store the created pet ID for cleanup
+    created_pet_ids.append(pet['id'])
+
+    # Generate new random data for the update
+    updated_data = generate_random_pet_data()
+
+    # Perform a PUT request to update the pet
+    response = update_pet(pet['id'], updated_data["name"], updated_data["category"], None)
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           200,
+                                           [pet['id'],
+                                            updated_data["name"],
+                                            updated_data["category"],
+                                            pet['status']])  # Status should remain unchanged
+    assert test_results == "No mismatch values"
+
+
+def test_update_pet_not_found():
+    """
+    Test the functionality of updating a pet in the Pet Store by ID when the pet is not found.
+
+    Actions:
+    - Attempt to update a non-existent pet.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 404, indicating the pet was not found.
+    - The response JSON should contain an error message indicating the pet was not found.
+    """
+    # Attempt to update a non-existent pet
+    response = update_pet(999999999, "Non-Existent Name", "Non-Existent Category", "Non-Existent Status")
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
+
+
+def test_update_pet_duplicate():
+    """
+    Test the functionality of updating a pet to a duplicate entry in the Pet Store.
+
+    Actions:
+    - Generate random pet data and add two new pets.
+    - Attempt to update the second pet to have the same name and category as the first pet.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 400, indicating a bad request due to duplicate data.
+    - The response JSON should contain an error message indicating the duplicate data.
+    """
+    # Add the first pet
+    first_pet_data = generate_random_pet_data()
+    response = add_pet(first_pet_data["name"], first_pet_data["category"], first_pet_data["status"])
+    first_pet = json.loads(response.text)
+    created_pet_ids.append(first_pet['id'])
+
+    # Add the second pet
+    second_pet_data = generate_random_pet_data()
+    response = add_pet(second_pet_data["name"], second_pet_data["category"], second_pet_data["status"])
+    second_pet = json.loads(response.text)
+    created_pet_ids.append(second_pet['id'])
+
+    # Attempt to update the second pet to have the same name and category as the first pet
+    response = update_pet(second_pet['id'], first_pet_data["name"], first_pet_data["category"], second_pet_data["status"])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           400,
+                                           ["Pet with the same name and category already exists"])
+    assert test_results == "No mismatch values"
+
+
+#
+# DELETE /pet tests
+#
+def test_delete_pet():
+    """
+    Test the functionality of deleting a pet from the Pet Store by ID.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Perform a DELETE request to remove the pet by ID.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 204, indicating a successful deletion.
+    - The response JSON should confirm that the pet was deleted.
+    """
+    # Generate random pet data and add the pet
+    test_data = generate_random_pet_data()
+    response = add_pet(test_data["name"], test_data["category"], test_data["status"])
+    pet = json.loads(response.text)
+
+    # Perform a DELETE request to remove the pet
+    response = delete_pet(pet['id'])
+
+    # Validate the outcome of the test with a single assert statement
+    assert response.status_code == 204
+
+
+def test_delete_pet_not_found():
+    """
+    Test the functionality of deleting a pet in the Pet Store by ID when the pet is not found.
+
+    Actions:
+    - Attempt to delete a non-existent pet.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 404, indicating the pet was not found.
+    - The response JSON should contain an error message indicating the pet was not found.
+    """
+    # Attempt to delete a non-existent pet
+    response = delete_pet(999999999)
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
+
+
+def test_delete_pet_already_deleted():
+    """
+    Test the functionality of deleting a pet that has already been deleted in the Pet Store.
+
+    Actions:
+    - Generate random pet data and add a new pet.
+    - Perform a DELETE request to remove the pet by ID.
+    - Attempt to delete the same pet again.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The first DELETE request should return status 204, indicating a successful deletion.
+    - The second DELETE request should return status 404, indicating the pet was not found.
+    """
+    # Generate random pet data and add the pet
+    test_data = generate_random_pet_data()
+    response = add_pet(test_data["name"], test_data["category"], test_data["status"])
+    pet = json.loads(response.text)
+
+    # Perform a DELETE request to remove the pet
+    response = delete_pet(pet['id'])
+    assert response.status_code == 204
+
+    # Attempt to delete the same pet again
+    response = delete_pet(pet['id'])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           404,
+                                           ["Pet not found"])
     assert test_results == "No mismatch values"
 
 
