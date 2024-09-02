@@ -123,13 +123,14 @@ def update_pet(pet_id):
         abort(404, 'Pet not found')
 
     # Return 400 if the update would result in a duplicate pet
-    if any(
-        pet['name'] == data['name']
-        and pet['category'] == data['category']
-        and pet['id'] != pet_id
-        for pet in pets
-    ):
-        abort(400, 'Pet with the same name and category already exists')
+    if 'name' in data:
+        if any(
+            pet['name'] == data['name']
+            and pet['category'] == data['category']
+            and pet['id'] != pet_id
+            for pet in pets
+        ):
+            abort(400, 'Pet with the same name and category already exists')
 
     # Update the pet with the provided data
     if 'name' in data:
