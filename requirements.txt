@@ -1,0 +1,4 @@
+Flask==2.2.5
+Flask==1.1.1
+Flask_RESTful==0.3.10
+Requests==2.32.3
