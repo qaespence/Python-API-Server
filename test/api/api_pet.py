@@ -1,5 +1,3 @@
-import requests
-from test.helpers.utils import load_config
 from test.api.basic_requests import post, get, put, delete
 
 
