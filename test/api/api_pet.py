@@ -8,7 +8,9 @@ def add_pet(name: str = None, category: str = None, status: str = None):
     Test the functionality of adding a new pet to the Pet Store.
 
     Parameters:
-    - payload (dict): The payload containing pet data to be added.
+    - name (str): Name of the pet to be added.
+    - category (str): Category of the pet to be added.
+    - status (str): Status of the pet to be added.
 
     Returns:
     - If the pet is successfully added, return a tuple containing the JSON response and the HTTP status code with a status code of 201.
@@ -48,7 +50,9 @@ def update_pet(pet_id, name: str = None, category: str = None, status: str = Non
 
     Parameters:
     - pet_id (int): The unique identifier of the pet to update.
-    - payload (dict): The payload containing pet data to be updated.
+    - name (str): (optional) New name of the pet to be updated.
+    - category (str): (optional) New category of the pet to be updated.
+    - status (str): (optional) New status of the pet to be updated.
 
     Returns:
     - If the pet is successfully updated, return a tuple containing the JSON response and the HTTP status code with a status code of 200.
