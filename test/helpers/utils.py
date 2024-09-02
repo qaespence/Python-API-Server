@@ -61,8 +61,8 @@ def verify_unexpected_response_text(unexpected_response_text, response_body):
         return None
 
 
-def multipoint_verification(response_body: string, expected_status_code: int = None,
-                            actual_status_code: int = None,
+def multipoint_verification(response_body: string, actual_status_code: int = None,
+                            expected_status_code: int = None,
                             expected_response_text: list = None,
                             unexpected_response_text: list = None,
                             expected_headers_text: list = None,
