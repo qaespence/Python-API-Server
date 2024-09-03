@@ -9,15 +9,35 @@ def load_config():
     return config_data
 
 
-def generate_random_pet_data():
-    name = ''.join(random.choice(string.ascii_letters) for _ in range(8))
-    category = random.choice(["Dog", "Cat", "Fish", "Bird", "Turtle", "Hamster"])
-    status = random.choice(["available", "pending", "sold"])
+def generate_random_pet_data(name=None, category=None, status=None):
+    """
+    Generate random pet data with optional overrides.
+
+    Parameters:
+    - name (str, optional): The name of the pet. If None, a random name will be generated.
+    - category (str, optional): The category of the pet. If None, a random category will be generated.
+    - status (str, optional): The status of the pet. If None, a random status will be generated.
+
+    Returns:
+    - dict: A dictionary containing the pet data.
+    """
+
+    def random_string(length=8):
+        return ''.join(random.choices(string.ascii_letters, k=length))
+
+    # Predefined lists of categories and statuses
+    categories = ["Dog", "Cat", "Bird", "Fish", "Reptile"]
+    statuses = ["available", "pending", "sold"]
+
+    # Use provided values or generate random ones
+    pet_name = name if name else random_string()
+    pet_category = category if category else random.choice(categories)
+    pet_status = status if status else random.choice(statuses)
 
     return {
-        "name": name,
-        "category": category,
-        "status": status
+        "name": pet_name,
+        "category": pet_category,
+        "status": pet_status
     }
 
 
