@@ -1,7 +1,9 @@
-from test.api.api_pet import add_pet, get_pet, delete_pet, update_pet
+from test.api.api_pet import add_pet, get_pet, delete_pet, update_pet, find_pet_by_status, upload_image
 from test.helpers.utils import generate_random_pet_data
 from test.helpers.utils import multipoint_verification
 import json
+import os
+import pytest
 
 # BASE_URL = "http://127.0.0.1:5000"  # Update with your actual server URL
 created_pet_ids = []
@@ -579,6 +581,158 @@ def test_delete_pet_already_deleted():
 
     # Attempt to delete the same pet again
     response = delete_pet(pet['id'])
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           404,
+                                           ["Pet not found"])
+    assert test_results == "No mismatch values"
+
+
+#
+# GET /pet/findByStatus tests
+#
+def test_find_pet_by_status_available():
+    """
+    Test finding pets by 'available' status.
+
+    Actions:
+    - Add a new pet with 'available' status.
+    - Perform a GET request to find pets by 'available' status.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 200, indicating a successful retrieval.
+    - The response JSON should contain the added pet's information.
+    """
+    # Generate and add a pet with 'available' status
+    test_data = generate_random_pet_data(status="available")
+    response = add_pet(test_data["name"], test_data["category"], test_data["status"])
+    pet = json.loads(response.text)
+    created_pet_ids.append(pet['id'])
+
+    # Find pets by 'available' status
+    response = find_pet_by_status("available")
+
+    # Validate the outcome of the test with a single assert statement
+    assert response.status_code == 200
+    assert any(p['id'] == pet['id'] for p in json.loads(response.text))
+
+
+def test_find_pet_by_status_invalid():
+    """
+    Test finding pets by an invalid status.
+
+    Actions:
+    - Perform a GET request to find pets by an invalid status.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 400, indicating a bad request due to an invalid status.
+    - The response JSON should contain an error message indicating the invalid status.
+    """
+    response = find_pet_by_status("invalid_status")
+
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           400,
+                                           ["Status parameter is invalid; should be available, pending, or sold"])
+    assert test_results == "No mismatch values"
+
+
+#
+# POST /pet/<int:pet_id>/uploadImage tests
+#
+@pytest.mark.skip(reason="Test is blocked due to dependency on a feature that is not yet implemented.")
+def test_upload_valid_image():
+    """
+    Test the functionality of uploading a valid image for a pet.
+
+    Actions:
+    - Add a new pet.
+    - Perform a POST request to upload a valid image file for the pet.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 201, indicating a successful upload.
+    - The response JSON should confirm that the file was uploaded successfully.
+    """
+    # Generate and add a new pet
+    test_data = generate_random_pet_data()
+    response = add_pet(test_data["name"], test_data["category"], test_data["status"])
+    pet = json.loads(response.text)
+    created_pet_ids.append(pet['id'])
+
+    # Path to a valid image file
+    valid_image_path = os.path.join(os.path.dirname(__file__), '..', "data", "valid_image.jpg")
+
+    # Perform the POST request to upload the image
+    response = upload_image(pet['id'], valid_image_path)
+    print(response)
+    print(response.text)
+    # Validate the outcome of the test with a single assert statement
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           201,
+                                           ["File uploaded successfully"])
+    assert test_results == "No mismatch values"
+
+
+@pytest.mark.skip(reason="Test is blocked due to dependency on a feature that is not yet implemented.")
+def test_upload_invalid_file():
+    """
+    Test the functionality of uploading an invalid file for a pet.
+
+    Actions:
+    - Add a new pet.
+    - Perform a POST request to upload an invalid (non-image) file for the pet.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 400, indicating a bad request due to an invalid file type.
+    - The response JSON should contain an error message indicating the file upload error.
+    """
+    # Generate and add a new pet
+    test_data = generate_random_pet_data()
+    response = add_pet(test_data["name"], test_data["category"], test_data["status"])
+    pet = json.loads(response.text)
+    created_pet_ids.append(pet['id'])
+
+    # Path to an invalid file (non-image)
+    invalid_file_path = os.path.join(os.path.dirname(__file__), '..', "data", "invalid_file.txt")
+
+    # Perform the POST request to upload the invalid file
+    response = upload_image(pet['id'], invalid_file_path)
+
+    # Validate the outcome of the test with a single assert statement
+    # Expecting a failure due to the invalid file type (depends on API implementation)
+    test_results = multipoint_verification(response.text, response.status_code,
+                                           400,
+                                           ["No selected file",
+                                            "Invalid file type"])
+    assert test_results == "No mismatch values"
+
+
+def test_upload_image_invalid_pet_id():
+    """
+    Test the functionality of uploading an image for a non-existent pet.
+
+    Actions:
+    - Attempt to upload an image file using an invalid pet ID.
+    - Retrieve the JSON response and HTTP status code.
+
+    Expected Outcome:
+    - The status code should be 404, indicating that the pet was not found.
+    - The response JSON should contain an error message indicating that the pet was not found.
+    """
+    # Define an invalid pet ID
+    invalid_pet_id = 999999999
+
+    # Path to a valid image file
+    valid_image_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'valid_image.jpg')
+    valid_image_path = os.path.normpath(valid_image_path)
+
+    # Perform the POST request to upload the image using an invalid pet ID
+    response = upload_image(invalid_pet_id, valid_image_path)
 
     # Validate the outcome of the test with a single assert statement
     test_results = multipoint_verification(response.text, response.status_code,

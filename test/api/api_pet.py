@@ -83,3 +83,36 @@ def delete_pet(pet_id):
     """
 
     return delete(f"/pet/{pet_id}")
+
+
+def find_pet_by_status(status: str):
+    """
+    Test the functionality of finding pets by status in the Pet Store.
+
+    Parameters:
+    - status (str): The status of the pets to retrieve. Should be one of 'available', 'pending', or 'sold'.
+
+    Returns:
+    - The JSON response and HTTP status code from the GET request.
+    """
+
+    return get(f"/pet/findByStatus?status={status}")
+
+
+def upload_image(pet_id: int, file_path: str):
+    """
+    Test the functionality of uploading an image for a pet in the Pet Store by ID.
+
+    Parameters:
+    - pet_id (int): The unique identifier of the pet for which to upload an image.
+    - file_path (str): The path to the image file to upload.
+
+    Returns:
+    - The JSON response and HTTP status code from the POST request.
+    """
+
+    with open(file_path, 'rb') as file:
+        files = {'file': file}
+        headers = {"content-type": "multipart/form-data"}
+        response = post(f"/pet/{pet_id}/uploadImage", files=files, headers=headers)
+    return response
