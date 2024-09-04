@@ -1,6 +1,11 @@
 import random
 import string
 import json
+from datetime import datetime
+import os, sys
+from os import path
+
+debug_file_name = ""
 
 
 def load_config():
@@ -115,3 +120,63 @@ def multipoint_verification(response_body: string, actual_status_code: int = Non
 
     return compiled_results(results)
 
+
+def set_debug_file_name(suite_name: str = "unnamed"):
+    global debug_file_name
+    debug_file_name = suite_name
+
+
+def curl_builder(url: str, payload: dict, method: str, headers: dict):
+    command = "curl -svX "
+    command = command + method.upper() + " " + url + " "
+    if headers is not None:
+        for key, value in headers.items():
+            command = command + "-H {'"+key+"':'"+value+"'} "
+    if payload is not None:
+        command = command + "-d '" + json.dumps(payload) + "'"
+    return command
+
+
+def api_logger(endpoint: str, payload: dict, headers: dict, response: str, method: str,
+               start_time: datetime, end_time: datetime):
+    log_dir = os.path.join('..', 'logs')
+    log_file = os.path.join(log_dir, f"{debug_file_name}.log")
+
+    # Ensure the log directory exists
+    os.makedirs(log_dir, exist_ok=True)
+
+    total_duration = end_time - start_time
+    config = load_config()
+    url = f"{config['base_url']}{endpoint}"
+    rebuilt_curl = curl_builder(url, payload, method, headers)
+    # print("{")
+    # print(f"\tendpoint: {endpoint}")
+    # print(f"\turl: {url}")
+    # print(f"\tCURL: {rebuilt_curl}")
+    # print(f"\tduration: {int(total_duration.microseconds/1000)} ms")
+    # print(f"\tpayload: {json.dumps(payload)}")
+    # print(f"\theaders: {json.dumps(headers)}")
+    # print(f"\tresponse: {''.join(response.splitlines())}")
+    # print("}")
+    log_entry = (
+        "{\n"
+        f"\tendpoint: {endpoint}\n"
+        f"\turl: {url}\n"
+        f"\ttime: {datetime.now()}\n"
+        f"\tCURL: {rebuilt_curl}\n"
+        f"\tduration: {int(total_duration.microseconds / 1000)} ms\n"
+        f"\tpayload: {json.dumps(payload)}\n"
+        f"\theaders: {json.dumps(headers)}\n"
+        f"\tresponse: {''.join(response.splitlines())}\n"
+        "}\n"
+    )
+    # print("DEBUG::  " + os.getcwd())
+    with open(log_file, 'a') as file:
+        file.write(log_entry)
+
+
+def clear_log_file():
+    log_dir = os.path.join('..', 'logs')
+    log_file = os.path.join(log_dir, f"{debug_file_name}.log")
+    if os.path.isfile(log_file):
+        open(log_file, 'w').close()

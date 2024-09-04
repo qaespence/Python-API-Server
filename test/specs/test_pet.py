@@ -1,12 +1,17 @@
 from test.api.api_pet import add_pet, get_pet, delete_pet, update_pet, find_pet_by_status, upload_image
-from test.helpers.utils import generate_random_pet_data
-from test.helpers.utils import multipoint_verification
+from test.helpers.utils import (generate_random_pet_data, set_debug_file_name,
+                                multipoint_verification, clear_log_file)
 import json
 import os
 import pytest
 
 # BASE_URL = "http://127.0.0.1:5000"  # Update with your actual server URL
 created_pet_ids = []
+
+
+def test_setup():
+    set_debug_file_name("api_pet")
+    clear_log_file()
 
 
 #
@@ -364,7 +369,7 @@ def test_update_pet_name_missing():
 
     # Perform a PUT request to update the pet
     response = update_pet(pet['id'], None, updated_data["category"], updated_data["status"])
-    print(response.text)
+
     # Validate the outcome of the test with a single assert statement
     test_results = multipoint_verification(response.text, response.status_code,
                                            200,
