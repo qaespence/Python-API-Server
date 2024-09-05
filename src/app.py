@@ -63,6 +63,12 @@ def add_pet():
     # Add pet to the database
     pets.append(new_pet)
 
+    # Add the pet category to the inventory with an initial quantity of 1 if it doesn't exist
+    if new_pet['category'] not in inventory:
+        inventory[new_pet['category']] = 1
+    else:
+        inventory[new_pet['category']] += 1  # Increment category quantity by 1
+
     # Return the new pet with a status code of 201
     return jsonify(new_pet), 201
 
@@ -122,6 +128,9 @@ def update_pet(pet_id):
     if not existing_pet:
         abort(404, 'Pet not found')
 
+    # Store the old category for inventory management
+    old_category = existing_pet['category']
+
     # Return 400 if the update would result in a duplicate pet
     if 'name' in data:
         if any(
@@ -151,6 +160,20 @@ def update_pet(pet_id):
             abort(400, 'Bad or missing data. Status too long')
         existing_pet['status'] = data['status']
 
+    # If the category has been changed, update the inventory
+    if old_category != existing_pet['category']:
+        # Decrease inventory for the old category
+        if old_category in inventory and inventory[old_category] > 0:
+            inventory[old_category] -= 1
+            if inventory[old_category] == 0:
+                del inventory[old_category]  # Optional: Remove category if quantity is zero
+
+        # Add to inventory for the new category
+        if existing_pet['category'] in inventory:
+            inventory[existing_pet['category']] += 1
+        else:
+            inventory[existing_pet['category']] = 1  # Initialize new category with default quantity 1
+
     # Return the updated pet with a status code of 200
     return jsonify(existing_pet), 200
 
@@ -177,6 +200,14 @@ def delete_pet(pet_id):
     if pet:
         # Remove the pet from the database
         pets = [p for p in pets if p['id'] != pet_id]
+
+        # Reduce the category quantity from the inventory if it exists
+        if pet['category'] in inventory and inventory[pet['category']] > 0:
+            inventory[pet['category']] -= 1
+            # Optional: Remove category if quantity is zero
+            if inventory[pet['category']] == 0:
+                del inventory[pet['category']]
+
         return jsonify({'message': 'Pet deleted'}), 204
     else:
         # Return a JSON message for a not-found pet with status code 404
@@ -257,7 +288,7 @@ def upload_image(pet_id):
 @app.route('/store/inventory', methods=['GET'])
 def get_inventory():
     """
-    Retrieve the inventory of the Pet Store.
+    Retrieve the inventory of the Pet Store by category.
     GET /store/inventory
 
     Returns:
@@ -269,11 +300,11 @@ def get_inventory():
 @app.route('/store/inventory/add', methods=['POST'])
 def add_to_inventory():
     """
-    Add a quantity of a pet to the inventory of the Pet Store.
+    Add a quantity of a pet category to the inventory.
     POST /store/inventory/add
 
     Request JSON Body:
-    - petId (int): The unique identifier of the pet to add to the inventory.
+    - category (str): The category of the pet to add to the inventory.
     - quantity (int): The quantity to add to the inventory.
 
     Returns:
@@ -284,32 +315,36 @@ def add_to_inventory():
     data = request.get_json()
 
     # Return 400 if data is missing
-    if 'petId' not in data:
-        abort(400, 'Bad or missing data. Missing petId field')
+    if 'category' not in data:
+        abort(400, 'Bad or missing data. Missing category field')
     if 'quantity' not in data:
         abort(400, 'Bad or missing data. Missing quantity field')
 
-    pet_id = data['petId']
+    category = data['category']
     quantity = data['quantity']
 
     # Return 404 if the specified pet is not found in the inventory
-    if pet_id not in inventory:
-        abort(404, 'Pet not found in inventory')
+    if category not in inventory:
+        abort(404, 'Pet category not found in inventory')
+
+    # If the category is not in the inventory, initialize it
+    if category not in inventory:
+        inventory[category] = 0
 
     # Update inventory by adding the specified quantity
-    inventory[pet_id] += quantity
+    inventory[category] += quantity
 
     # Return a JSON message indicating the added quantity with a status code of 200
-    return jsonify({'message': f'Added {quantity} to inventory for pet {pet_id}'}), 200
+    return jsonify({'message': f'Added {quantity} to inventory for category {category}'}), 200
 
 
 @app.route('/store/inventory/remove', methods=['POST'])
 def remove_from_inventory():
     """
-    Remove a quantity of a pet from the inventory of the Pet Store.
+    Remove a quantity of a pet category from the inventory.
 
     Request JSON Body:
-    - petId (int): The unique identifier of the pet to remove from the inventory.
+    - category (str): The category of the pet to remove from the inventory.
     - quantity (int): The quantity to remove from the inventory.
 
     Returns:
@@ -321,27 +356,31 @@ def remove_from_inventory():
     data = request.get_json()
 
     # Return 400 if data is missing
-    if 'petId' not in data:
-        abort(400, 'Bad or missing data. Missing petId field')
+    if 'category' not in data:
+        abort(400, 'Bad or missing data. Missing category field')
     if 'quantity' not in data:
         abort(400, 'Bad or missing data. Missing quantity field')
 
-    pet_id = data['petId']
+    category = data['category']
     quantity = data['quantity']
 
-    # Return 404 if the specified pet is not found in the inventory
-    if pet_id not in inventory:
-        abort(404, 'Pet not found in inventory')
+    # Check if the category exists in the inventory
+    if category not in inventory:
+        abort(400, 'Category not found in inventory')
 
-    # Check if there is enough quantity in the inventory
-    if inventory[pet_id] < quantity:
+    # Check if the inventory has enough quantity
+    if inventory[category] < quantity:
         abort(400, 'Not enough quantity in inventory')
 
-    # Update inventory by subtracting the specified quantity
-    inventory[pet_id] -= quantity
+    # Update inventory by removing the specified quantity
+    inventory[category] -= quantity
+
+    # Optional: Remove category if quantity is zero
+    if inventory[category] == 0:
+        del inventory[category]
 
     # Return a JSON message indicating the removed quantity
-    return jsonify({'message': f'Removed {quantity} from inventory for pet {pet_id}'})
+    return jsonify({'message': f'Removed {quantity} from inventory for category {category}'})
 
 
 # /order related endpoints
