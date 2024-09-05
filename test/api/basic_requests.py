@@ -2,7 +2,6 @@ import requests
 from test.helpers.utils import load_config
 from test.helpers.utils import api_logger
 from datetime import datetime
-import json
 
 
 def post(endpoint: str, payload: dict = None, headers: dict = None, files: dict = None):

@@ -78,7 +78,7 @@ def verify_expected_response_text(expected_response_text, response_body):
 def verify_unexpected_response_text(unexpected_response_text, response_body):
     results = []
     for text in unexpected_response_text:
-        if str(text) not in response_body:
+        if str(text) in response_body:
             results.append("Unexpected string \"" + str(text) + "\" DOES appear in results content\n\n")
     if results is not []:
         return results
@@ -175,8 +175,21 @@ def api_logger(endpoint: str, payload: dict, headers: dict, response: str, metho
         file.write(log_entry)
 
 
-def clear_log_file():
+def clear_log_files():
+    """
+    Finds and deletes all .log files in the logs directory.
+    """
     log_dir = os.path.join('..', 'logs')
-    log_file = os.path.join(log_dir, f"{debug_file_name}.log")
-    if os.path.isfile(log_file):
-        open(log_file, 'w').close()
+
+    # Check if the directory exists
+    if os.path.exists(log_dir):
+        # Iterate over all files in the directory
+        for file_name in os.listdir(log_dir):
+            # Check if the file has a .log extension
+            if file_name.endswith('.log'):
+                log_file = os.path.join(log_dir, file_name)
+                if os.path.isfile(log_file):
+                    os.remove(log_file)
+                    print(f"Deleted log file: {log_file}")
+    else:
+        print(f"Log directory {log_dir} does not exist.")
