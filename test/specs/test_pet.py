@@ -1,6 +1,6 @@
 from test.api.api_pet import add_pet, get_pet, delete_pet, update_pet, find_pet_by_status, upload_image
 from test.helpers.utils import (generate_random_pet_data, set_debug_file_name,
-                                multipoint_verification, clear_log_file)
+                                multipoint_verification, clear_log_files)
 import json
 import os
 import pytest
@@ -11,7 +11,7 @@ created_pet_ids = []
 
 def test_setup():
     set_debug_file_name("api_pet")
-    clear_log_file()
+    clear_log_files()
 
 
 #
