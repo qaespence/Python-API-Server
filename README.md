@@ -87,4 +87,6 @@ pytest
 Ensure that the API server is running before executing the tests.
 
 
+## License
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details.
